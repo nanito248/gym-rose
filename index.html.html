@@ -1,0 +1,2213 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="NeonLift" />
+  <title>NeonLift — Rutina Gym 4 Días</title>
+
+  <!-- Fuente Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+          },
+          colors: {
+            oled: '#000000',
+            surface: '#0D0D10',
+            surfaceLight: '#141419',
+            borderSubtle: '#1E1E24',
+            neon: '#FF2E93',
+            neonStrong: '#FF1E8E',
+            textMain: '#F8F8FA',
+            textMuted: '#8A8A96',
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    /* Base OLED y prevención de rebote/zoom no deseado */
+    html, body {
+      background-color: #000000;
+      color: #F8F8FA;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior-y: none;
+    }
+
+    /* Evitar zoom automático en iOS/Android asegurando >= 16px en inputs */
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+
+    /* Brillos sutiles en Rosa Neón */
+    .neon-glow {
+      box-shadow: 0 0 18px rgba(255, 46, 147, 0.35), 0 0 4px rgba(255, 30, 142, 0.5);
+    }
+    .neon-glow-sm {
+      box-shadow: 0 0 10px rgba(255, 46, 147, 0.28);
+    }
+    .neon-border-glow {
+      border-color: rgba(255, 46, 147, 0.65);
+      box-shadow: 0 0 12px rgba(255, 46, 147, 0.16);
+    }
+
+    /* Scrollbar discreta */
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #000000;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #26262E;
+      border-radius: 9999px;
+    }
+
+    /* Safe area inferior para iPhones con barra gestual */
+    .pb-safe {
+      padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+    }
+
+    /* Animación de entrada de toasts y modales */
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-up {
+      animation: fadeSlideUp 0.2s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="bg-oled text-textMain min-h-screen antialiased selection:bg-neon selection:text-white">
+
+  <!-- Contenedor principal mobile-first centrado en desktop -->
+  <div id="app" class="max-w-lg mx-auto min-h-screen flex flex-col relative bg-oled">
+
+    <!-- Header superior sticky -->
+    <header class="sticky top-0 z-30 bg-oled/90 backdrop-blur-md border-b border-borderSubtle px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-neon/15 border border-neon/40 flex items-center justify-center neon-glow-sm">
+          <!-- Ícono pesa minimalista SVG -->
+          <svg class="w-4 h-4 text-neon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6.5 6.5h11v11h-11z" opacity="0"/>
+            <path d="M14.4 14.4 9.6 9.6"/>
+            <path d="M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z"/>
+            <path d="m21.5 21.5-1.4-1.4"/>
+            <path d="M3.9 3.9 2.5 2.5"/>
+            <path d="M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-base font-extrabold tracking-tight leading-none text-textMain">
+            NEON<span class="text-neon">LIFT</span>
+          </h1>
+          <p id="header-subtitle" class="text-[11px] text-textMuted mt-0.5 font-medium">Rutina 4 Días · Torso / Pierna</p>
+        </div>
+      </div>
+
+      <!-- Botón rápido para abrir cronómetro manual -->
+      <button
+        id="btn-open-timer"
+        type="button"
+        aria-label="Abrir cronómetro de descanso"
+        class="h-11 px-3 rounded-xl bg-surface border border-borderSubtle text-textMuted hover:text-neon hover:border-neon/50 active:scale-95 transition flex items-center gap-1.5 text-xs font-semibold"
+      >
+        <svg class="w-4 h-4 text-neon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="13" r="8"></circle>
+          <path d="M12 9v4l2 2"></path>
+          <path d="M5 3 2 6"></path>
+          <path d="m22 6-3-3"></path>
+          <path d="M10 2h4"></path>
+        </svg>
+        <span id="header-timer-badge">Descanso</span>
+      </button>
+    </header>
+
+    <!-- Contenido dinámico de pestañas -->
+    <main id="main-content" class="flex-1 px-4 pt-4 pb-44 space-y-4">
+      <!-- Renderizado por JavaScript -->
+    </main>
+
+    <!-- Barra flotante del Cronómetro de Descanso (arriba de la navegación inferior) -->
+    <div
+      id="rest-timer-bar"
+      class="hidden fixed left-0 right-0 bottom-[74px] z-40 px-3 max-w-lg mx-auto animate-fade-up"
+    >
+      <div class="bg-surface/95 backdrop-blur-lg border border-neon/40 rounded-2xl p-3 shadow-2xl neon-glow-sm">
+        <!-- Barra de progreso en rosa neón -->
+        <div class="w-full h-1.5 bg-borderSubtle rounded-full overflow-hidden mb-2.5">
+          <div id="timer-progress" class="h-full bg-neon transition-all duration-300 rounded-full" style="width: 100%"></div>
+        </div>
+
+        <div class="flex items-center justify-between gap-2">
+          <!-- Tiempo restante -->
+          <div class="flex items-center gap-2.5">
+            <span id="timer-display" class="text-2xl font-extrabold tabular-nums tracking-tight text-textMain">01:30</span>
+            <span class="text-[11px] uppercase tracking-wider font-semibold text-neon bg-neon/10 px-2 py-0.5 rounded-lg">Descanso</span>
+          </div>
+
+          <!-- Controles principales -->
+          <div class="flex items-center gap-1.5">
+            <button type="button" onclick="adjustTimer(-15)" class="h-11 px-2.5 rounded-xl bg-surfaceLight border border-borderSubtle text-xs font-bold text-textMain active:scale-95 transition">-15s</button>
+            <button type="button" onclick="adjustTimer(15)" class="h-11 px-2.5 rounded-xl bg-surfaceLight border border-borderSubtle text-xs font-bold text-textMain active:scale-95 transition">+15s</button>
+            <button type="button" id="timer-pause-btn" onclick="toggleTimerPause()" class="h-11 w-11 rounded-xl bg-neon/15 border border-neon/40 text-neon flex items-center justify-center active:scale-95 transition" aria-label="Pausar o reanudar">
+              <!-- SVG dinámico pausa/play -->
+            </button>
+            <button type="button" onclick="stopTimer()" class="h-11 w-11 rounded-xl bg-surfaceLight border border-borderSubtle text-textMuted hover:text-textMain flex items-center justify-center active:scale-95 transition" aria-label="Cerrar cronómetro">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Presets rápidos de tiempo -->
+        <div class="grid grid-cols-4 gap-1.5 mt-2.5">
+          <button type="button" onclick="startRestTimer(60)" class="timer-preset-btn h-8 rounded-lg bg-oled border border-borderSubtle text-xs font-semibold text-textMuted hover:border-neon/50 hover:text-textMain transition">60s</button>
+          <button type="button" onclick="startRestTimer(90)" class="timer-preset-btn h-8 rounded-lg bg-oled border border-borderSubtle text-xs font-semibold text-textMuted hover:border-neon/50 hover:text-textMain transition">90s</button>
+          <button type="button" onclick="startRestTimer(120)" class="timer-preset-btn h-8 rounded-lg bg-oled border border-borderSubtle text-xs font-semibold text-textMuted hover:border-neon/50 hover:text-textMain transition">120s</button>
+          <button type="button" onclick="startRestTimer(180)" class="timer-preset-btn h-8 rounded-lg bg-oled border border-borderSubtle text-xs font-semibold text-textMuted hover:border-neon/50 hover:text-textMain transition">180s</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barra de navegación inferior fija (4 pestañas) -->
+    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-oled/95 backdrop-blur-lg border-t border-borderSubtle pb-safe">
+      <div class="max-w-lg mx-auto grid grid-cols-4 px-2 pt-1.5 pb-1">
+        <button type="button" data-tab="train" onclick="switchTab('train')" class="nav-btn min-h-[52px] flex flex-col items-center justify-center gap-1 rounded-xl transition">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+          <span class="text-[11px] font-semibold">Entrenar</span>
+        </button>
+
+        <button type="button" data-tab="routine" onclick="switchTab('routine')" class="nav-btn min-h-[52px] flex flex-col items-center justify-center gap-1 rounded-xl transition">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="16" rx="2"/>
+            <path d="M7 8h10M7 12h10M7 16h6"/>
+          </svg>
+          <span class="text-[11px] font-semibold">Rutina</span>
+        </button>
+
+        <button type="button" data-tab="progress" onclick="switchTab('progress')" class="nav-btn min-h-[52px] flex flex-col items-center justify-center gap-1 rounded-xl transition">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3v18h18"/>
+            <path d="m19 9-5 5-4-4-3 3"/>
+          </svg>
+          <span class="text-[11px] font-semibold">Progreso</span>
+        </button>
+
+        <button type="button" data-tab="settings" onclick="switchTab('settings')" class="nav-btn min-h-[52px] flex flex-col items-center justify-center gap-1 rounded-xl transition">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.85 1 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <span class="text-[11px] font-semibold">Ajustes</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Contenedor de Toast flotante superior -->
+    <div id="toast-container" class="fixed top-16 left-0 right-0 z-50 flex flex-col items-center gap-2 px-4 pointer-events-none max-w-lg mx-auto"></div>
+
+    <!-- Modal genérico (confirmaciones, resumen de entrenamiento, agregar/editar ejercicio) -->
+    <div id="modal-overlay" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-3 sm:p-4">
+      <div id="modal-box" class="w-full max-w-md bg-surface border border-borderSubtle rounded-3xl p-5 shadow-2xl animate-fade-up max-h-[88vh] overflow-y-auto">
+        <!-- Contenido dinámico del modal -->
+      </div>
+    </div>
+
+    <!-- Input file oculto para importar JSON -->
+    <input type="file" id="import-json-input" accept=".json,application/json" class="hidden" />
+  </div>
+
+  <script>
+    /* =========================================================================
+       NEONLIFT — LÓGICA PRINCIPAL Y PERSISTENCIA EN LOCALSTORAGE
+       ========================================================================= */
+
+    // Claves de almacenamiento local
+    const STORAGE_KEYS = {
+      ROUTINE: 'neonlift_v1_routine',
+      HISTORY: 'neonlift_v1_history',
+      DRAFT: 'neonlift_v1_draft',
+      SETTINGS: 'neonlift_v1_settings',
+    };
+
+    // Rutina inicial científicamente eficiente de 4 días (Frecuencia 2 Torso / Pierna)
+    function getDefaultRoutine() {
+      return [
+        {
+          id: 1,
+          name: 'Torso A (Pecho & Espalda)',
+          exercises: [
+            { id: 'ex_1_1', name: 'Press de Banca Plano', targetSets: 4, targetReps: '6-8', restSec: 120 },
+            { id: 'ex_1_2', name: 'Remo con Barra', targetSets: 4, targetReps: '8-10', restSec: 120 },
+            { id: 'ex_1_3', name: 'Press Inclinado con Mancuernas', targetSets: 3, targetReps: '8-10', restSec: 90 },
+            { id: 'ex_1_4', name: 'Jalón al Pecho', targetSets: 3, targetReps: '10-12', restSec: 90 },
+            { id: 'ex_1_5', name: 'Elevaciones Laterales', targetSets: 4, targetReps: '12-15', restSec: 60 },
+          ],
+        },
+        {
+          id: 2,
+          name: 'Pierna A (Cuádriceps & Core)',
+          exercises: [
+            { id: 'ex_2_1', name: 'Sentadilla Libre', targetSets: 4, targetReps: '6-8', restSec: 150 },
+            { id: 'ex_2_2', name: 'Prensa 45°', targetSets: 3, targetReps: '10-12', restSec: 120 },
+            { id: 'ex_2_3', name: 'Sillón de Cuádriceps', targetSets: 3, targetReps: '12-15', restSec: 60 },
+            { id: 'ex_2_4', name: 'Peso Muerto Rumano', targetSets: 3, targetReps: '8-10', restSec: 120 },
+            { id: 'ex_2_5', name: 'Gemelos de Pie', targetSets: 4, targetReps: '12-15', restSec: 60 },
+            { id: 'ex_2_6', name: 'Plancha / Crunch en Polea', targetSets: 3, targetReps: '12-15', restSec: 60 },
+          ],
+        },
+        {
+          id: 3,
+          name: 'Torso B (Espalda, Pecho & Brazos)',
+          exercises: [
+            { id: 'ex_3_1', name: 'Dominadas / Jalón Neutro', targetSets: 4, targetReps: '6-10', restSec: 120 },
+            { id: 'ex_3_2', name: 'Press Militar', targetSets: 4, targetReps: '6-8', restSec: 120 },
+            { id: 'ex_3_3', name: 'Remo en Polea Baja', targetSets: 3, targetReps: '10-12', restSec: 90 },
+            { id: 'ex_3_4', name: 'Fondos / Aperturas', targetSets: 3, targetReps: '10-12', restSec: 90 },
+            { id: 'ex_3_5', name: 'Curl de Bíceps con Barra', targetSets: 3, targetReps: '10-12', restSec: 60 },
+            { id: 'ex_3_6', name: 'Extensión de Tríceps en Polea', targetSets: 3, targetReps: '10-12', restSec: 60 },
+          ],
+        },
+        {
+          id: 4,
+          name: 'Pierna B (Isquios, Glúteos & Hombros)',
+          exercises: [
+            { id: 'ex_4_1', name: 'Peso Muerto Rumano', targetSets: 4, targetReps: '8-10', restSec: 120 },
+            { id: 'ex_4_2', name: 'Hip Thrust', targetSets: 4, targetReps: '8-10', restSec: 120 },
+            { id: 'ex_4_3', name: 'Curl Femoral Acostado', targetSets: 3, targetReps: '10-12', restSec: 90 },
+            { id: 'ex_4_4', name: 'Zancadas Búlgaras', targetSets: 3, targetReps: '8-10', restSec: 90 },
+            { id: 'ex_4_5', name: 'Vuelos Posteriores / Face Pull', targetSets: 4, targetReps: '12-15', restSec: 60 },
+            { id: 'ex_4_6', name: 'Gemelos Sentado', targetSets: 4, targetReps: '12-15', restSec: 60 },
+          ],
+        },
+      ];
+    }
+
+    function getDefaultSettings() {
+      return {
+        autoStartRest: true,
+        defaultRestSeconds: 90,
+        soundEnabled: true,
+        vibrateEnabled: true,
+      };
+    }
+
+    // Estado global de la aplicación
+    const state = {
+      activeTab: 'train', // 'train' | 'routine' | 'progress' | 'settings'
+      routine: [],
+      history: [],
+      settings: getDefaultSettings(),
+      draft: {
+        selectedDayId: 1,
+        days: {}, // { [dayId]: { [exerciseId]: { sets: [{weight, reps, rir, completed}], note: '' } } }
+      },
+      routineSelectedDayId: 1,
+      progressSelectedExercise: '',
+      progressMetric: 'maxWeight', // 'maxWeight' | 'est1RM' | 'volume'
+      progressSelectedPointIdx: null,
+      // Estado del cronómetro
+      timer: {
+        active: false,
+        paused: false,
+        totalSeconds: 90,
+        remainingSeconds: 90,
+        intervalId: null,
+      },
+    };
+
+    /* -------------------------------------------------------------------------
+       UTILIDADES DE ALMACENAMIENTO Y FORMATO
+       ------------------------------------------------------------------------- */
+    function loadFromStorage() {
+      try {
+        const savedRoutine = localStorage.getItem(STORAGE_KEYS.ROUTINE);
+        state.routine = savedRoutine ? JSON.parse(savedRoutine) : getDefaultRoutine();
+
+        const savedHistory = localStorage.getItem(STORAGE_KEYS.HISTORY);
+        state.history = savedHistory ? JSON.parse(savedHistory) : [];
+
+        const savedSettings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+        state.settings = savedSettings ? { ...getDefaultSettings(), ...JSON.parse(savedSettings) } : getDefaultSettings();
+
+        const savedDraft = localStorage.getItem(STORAGE_KEYS.DRAFT);
+        if (savedDraft) {
+          const parsedDraft = JSON.parse(savedDraft);
+          state.draft = {
+            selectedDayId: parsedDraft.selectedDayId || 1,
+            days: parsedDraft.days || {},
+          };
+        }
+      } catch (err) {
+        console.error('Error cargando localStorage:', err);
+        state.routine = getDefaultRoutine();
+        state.history = [];
+        state.settings = getDefaultSettings();
+      }
+    }
+
+    function saveRoutine() {
+      try { localStorage.setItem(STORAGE_KEYS.ROUTINE, JSON.stringify(state.routine)); } catch (e) {}
+    }
+    function saveHistory() {
+      try { localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(state.history)); } catch (e) {}
+    }
+    function saveDraft() {
+      try { localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(state.draft)); } catch (e) {}
+    }
+    function saveSettings() {
+      try { localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(state.settings)); } catch (e) {}
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function parseNum(val) {
+      if (val === '' || val === null || val === undefined) return NaN;
+      return parseFloat(String(val).replace(',', '.'));
+    }
+
+    function formatShortDate(iso) {
+      const d = new Date(iso);
+      return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
+    }
+
+    function formatFullDate(iso) {
+      const d = new Date(iso);
+      return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function formatTimer(sec) {
+      const s = Math.max(0, Math.floor(sec));
+      const m = Math.floor(s / 60);
+      const r = s % 60;
+      return `${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`;
+    }
+
+    // Fórmula Epley para 1RM estimado
+    function calcEpley1RM(weight, reps) {
+      if (!weight || weight <= 0 || !reps || reps <= 0) return 0;
+      if (reps === 1) return weight;
+      return weight * (1 + reps / 30);
+    }
+
+    // Toast breve no intrusivo
+    function showToast(message, type = 'neon') {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      const accentClass =
+        type === 'error'
+          ? 'border-red-500/60 text-red-200 bg-[#190A0E]'
+          : 'border-neon/60 text-textMain bg-surface neon-glow-sm';
+      el.className = `pointer-events-auto px-4 py-2.5 rounded-2xl border text-xs font-semibold shadow-xl animate-fade-up flex items-center gap-2 ${accentClass}`;
+      el.innerHTML = `<span class="w-2 h-2 rounded-full ${type === 'error' ? 'bg-red-500' : 'bg-neon'}"></span><span>${escapeHtml(message)}</span>`;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(-6px)';
+        el.style.transition = 'all 0.2s ease';
+        setTimeout(() => el.remove(), 220);
+      }, 2600);
+    }
+
+    /* -------------------------------------------------------------------------
+       MODALES PERSONALIZADOS (SIN alert() NI confirm())
+       ------------------------------------------------------------------------- */
+    function openModal(htmlContent) {
+      const overlay = document.getElementById('modal-overlay');
+      const box = document.getElementById('modal-box');
+      box.innerHTML = htmlContent;
+      overlay.classList.remove('hidden');
+      overlay.onclick = (e) => {
+        if (e.target === overlay) closeModal();
+      };
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.add('hidden');
+    }
+
+    /* -------------------------------------------------------------------------
+       CRONÓMETRO DE DESCANSO CON WEB AUDIO API + VIBRACIÓN
+       ------------------------------------------------------------------------- */
+    function playBeepSound() {
+      if (!state.settings.soundEnabled) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const playTone = (startTime, freq, duration) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, startTime);
+          gain.gain.setValueAtTime(0.001, startTime);
+          gain.gain.exponentialRampToValueAtTime(0.18, startTime + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(startTime);
+          osc.stop(startTime + duration);
+        };
+        const now = ctx.currentTime;
+        playTone(now, 880, 0.14);
+        playTone(now + 0.18, 1174.66, 0.22);
+      } catch (e) {
+        // Silencioso si el navegador bloquea audio sin interacción
+      }
+    }
+
+    function updateTimerUI() {
+      const bar = document.getElementById('rest-timer-bar');
+      const display = document.getElementById('timer-display');
+      const progress = document.getElementById('timer-progress');
+      const pauseBtn = document.getElementById('timer-pause-btn');
+      const headerBadge = document.getElementById('header-timer-badge');
+
+      if (!state.timer.active) {
+        bar.classList.add('hidden');
+        headerBadge.textContent = 'Descanso';
+        return;
+      }
+
+      bar.classList.remove('hidden');
+      const formatted = formatTimer(state.timer.remainingSeconds);
+      display.textContent = formatted;
+      headerBadge.textContent = formatted;
+
+      const pct = state.timer.totalSeconds > 0
+        ? Math.max(0, Math.min(100, (state.timer.remainingSeconds / state.timer.totalSeconds) * 100))
+        : 0;
+      progress.style.width = `${pct}%`;
+
+      pauseBtn.innerHTML = state.timer.paused
+        ? `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`
+        : `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>`;
+    }
+
+    function startRestTimer(seconds) {
+      const sec = Number(seconds) || state.settings.defaultRestSeconds || 90;
+      if (state.timer.intervalId) clearInterval(state.timer.intervalId);
+      state.timer.active = true;
+      state.timer.paused = false;
+      state.timer.totalSeconds = sec;
+      state.timer.remainingSeconds = sec;
+
+      updateTimerUI();
+
+      state.timer.intervalId = setInterval(() => {
+        if (state.timer.paused) return;
+        state.timer.remainingSeconds -= 1;
+        updateTimerUI();
+
+        if (state.timer.remainingSeconds <= 0) {
+          clearInterval(state.timer.intervalId);
+          state.timer.intervalId = null;
+          state.timer.active = false;
+          updateTimerUI();
+          playBeepSound();
+          if (state.settings.vibrateEnabled && navigator.vibrate) {
+            try { navigator.vibrate([200, 100, 200]); } catch (e) {}
+          }
+          showToast('¡Descanso terminado! Vamos con la siguiente serie.');
+        }
+      }, 1000);
+    }
+
+    function adjustTimer(delta) {
+      if (!state.timer.active) return;
+      state.timer.remainingSeconds = Math.max(5, state.timer.remainingSeconds + delta);
+      if (state.timer.remainingSeconds > state.timer.totalSeconds) {
+        state.timer.totalSeconds = state.timer.remainingSeconds;
+      }
+      updateTimerUI();
+    }
+
+    function toggleTimerPause() {
+      if (!state.timer.active) return;
+      state.timer.paused = !state.timer.paused;
+      updateTimerUI();
+    }
+
+    function stopTimer() {
+      if (state.timer.intervalId) clearInterval(state.timer.intervalId);
+      state.timer.intervalId = null;
+      state.timer.active = false;
+      state.timer.paused = false;
+      updateTimerUI();
+    }
+
+    /* -------------------------------------------------------------------------
+       BORRADORES DE ENTRENAMIENTO Y REFERENCIA DE SESIÓN ANTERIOR
+       ------------------------------------------------------------------------- */
+    function ensureDayDraft(dayId) {
+      const day = state.routine.find((d) => d.id === dayId);
+      if (!day) return {};
+      if (!state.draft.days[dayId]) state.draft.days[dayId] = {};
+
+      day.exercises.forEach((ex) => {
+        if (!state.draft.days[dayId][ex.id]) {
+          const sets = [];
+          const count = Math.max(1, Number(ex.targetSets) || 3);
+          for (let i = 0; i < count; i++) {
+            sets.push({ weight: '', reps: '', rir: '', completed: false });
+          }
+          state.draft.days[dayId][ex.id] = { sets, note: '' };
+        }
+      });
+      return state.draft.days[dayId];
+    }
+
+    // Busca el registro más reciente de un ejercicio por nombre (case-insensitive)
+    function getLastExerciseLog(exerciseName) {
+      const target = exerciseName.trim().toLowerCase();
+      // Historial ordenado del más reciente al más antiguo
+      const sorted = [...state.history].sort((a, b) => new Date(b.date) - new Date(a.date));
+      for (const session of sorted) {
+        const found = (session.exercises || []).find(
+          (e) => e.name.trim().toLowerCase() === target && e.sets && e.sets.length > 0
+        );
+        if (found) {
+          return {
+            date: session.date,
+            note: found.note || '',
+            sets: found.sets,
+          };
+        }
+      }
+      return null;
+    }
+
+    /* -------------------------------------------------------------------------
+       NAVEGACIÓN ENTRE PESTAÑAS
+       ------------------------------------------------------------------------- */
+    function switchTab(tabName) {
+      state.activeTab = tabName;
+      updateNavHighlight();
+      renderCurrentTab();
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+
+    function updateNavHighlight() {
+      document.querySelectorAll('.nav-btn').forEach((btn) => {
+        const isActive = btn.dataset.tab === state.activeTab;
+        btn.classList.toggle('text-neon', isActive);
+        btn.classList.toggle('bg-neon/10', isActive);
+        btn.classList.toggle('text-textMuted', !isActive);
+      });
+    }
+
+    function renderCurrentTab() {
+      const main = document.getElementById('main-content');
+      if (state.activeTab === 'train') renderTrainTab(main);
+      else if (state.activeTab === 'routine') renderRoutineTab(main);
+      else if (state.activeTab === 'progress') renderProgressTab(main);
+      else if (state.activeTab === 'settings') renderSettingsTab(main);
+    }
+
+    /* =========================================================================
+       PESTAÑA 1: ENTRENAR (REGISTRO EN VIVO)
+       ========================================================================= */
+    function renderTrainTab(container) {
+      const dayId = state.draft.selectedDayId || 1;
+      const day = state.routine.find((d) => d.id === dayId) || state.routine[0];
+      const dayDraft = ensureDayDraft(day.id);
+
+      // Calcular progreso de series completadas
+      let totalSets = 0;
+      let completedSets = 0;
+      day.exercises.forEach((ex) => {
+        const exDraft = dayDraft[ex.id];
+        if (exDraft) {
+          totalSets += exDraft.sets.length;
+          completedSets += exDraft.sets.filter((s) => s.completed).length;
+        }
+      });
+      const pct = totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
+
+      const dayPillsHtml = state.routine
+        .map((d) => {
+          const active = d.id === day.id;
+          return `
+            <button
+              type="button"
+              onclick="selectTrainDay(${d.id})"
+              class="h-11 rounded-xl font-bold text-xs transition active:scale-95 border ${
+                active
+                  ? 'bg-neon text-white border-neon neon-glow-sm'
+                  : 'bg-surface text-textMuted border-borderSubtle hover:text-textMain'
+              }"
+            >
+              Día ${d.id}
+            </button>
+          `;
+        })
+        .join('');
+
+      const exercisesHtml =
+        day.exercises.length === 0
+          ? `
+            <div class="bg-surface border border-borderSubtle rounded-2xl p-6 text-center space-y-3">
+              <p class="text-sm text-textMuted">Este día no tiene ejercicios cargados todavía.</p>
+              <button type="button" onclick="switchTab('routine')" class="h-11 px-4 rounded-xl bg-neon/15 border border-neon/40 text-neon text-xs font-bold">
+                Ir a configurar Rutina
+              </button>
+            </div>
+          `
+          : day.exercises
+              .map((ex, exIdx) => {
+                const exDraft = dayDraft[ex.id];
+                const lastLog = getLastExerciseLog(ex.name);
+
+                const prevNoteHtml =
+                  lastLog && lastLog.note
+                    ? `
+                      <div class="mt-2 px-3 py-2 rounded-xl bg-neon/10 border border-neon/30 flex items-start gap-2">
+                        <span class="text-[11px] font-bold text-neon shrink-0">Nota ant:</span>
+                        <span class="text-xs text-textMain leading-snug">${escapeHtml(lastLog.note)}</span>
+                      </div>
+                    `
+                    : '';
+
+                const setsRowsHtml = exDraft.sets
+                  .map((set, sIdx) => {
+                    const prevSet = lastLog && lastLog.sets[sIdx] ? lastLog.sets[sIdx] : null;
+                    const prevText = prevSet
+                      ? `${prevSet.weight}kg×${prevSet.reps}${prevSet.rir !== null && prevSet.rir !== '' && prevSet.rir !== undefined ? `·R${prevSet.rir}` : ''}`
+                      : '—';
+
+                    return `
+                      <div class="grid grid-cols-[26px_1fr_68px_56px_48px_44px] items-center gap-1.5 py-1.5 px-1.5 rounded-xl transition ${
+                        set.completed ? 'bg-neon/10 border border-neon/30' : 'bg-oled/60 border border-transparent'
+                      }">
+                        <span class="text-xs font-bold text-center ${set.completed ? 'text-neon' : 'text-textMuted'}">${sIdx + 1}</span>
+                        <span class="text-[11px] text-textMuted truncate font-medium" title="Sesión anterior">${escapeHtml(prevText)}</span>
+                        <input
+                          type="text"
+                          inputmode="decimal"
+                          placeholder="kg"
+                          value="${escapeHtml(set.weight)}"
+                          oninput="updateSetField(${day.id}, '${ex.id}', ${sIdx}, 'weight', this.value)"
+                          class="w-full h-11 px-2 text-center rounded-xl bg-surfaceLight border border-borderSubtle text-textMain font-semibold focus:outline-none focus:border-neon"
+                        />
+                        <input
+                          type="text"
+                          inputmode="numeric"
+                          placeholder="reps"
+                          value="${escapeHtml(set.reps)}"
+                          oninput="updateSetField(${day.id}, '${ex.id}', ${sIdx}, 'reps', this.value)"
+                          class="w-full h-11 px-1.5 text-center rounded-xl bg-surfaceLight border border-borderSubtle text-textMain font-semibold focus:outline-none focus:border-neon"
+                        />
+                        <input
+                          type="text"
+                          inputmode="numeric"
+                          placeholder="RIR"
+                          value="${escapeHtml(set.rir)}"
+                          oninput="updateSetField(${day.id}, '${ex.id}', ${sIdx}, 'rir', this.value)"
+                          class="w-full h-11 px-1 text-center rounded-xl bg-surfaceLight border border-borderSubtle text-textMain font-semibold focus:outline-none focus:border-neon"
+                        />
+                        <button
+                          type="button"
+                          onclick="toggleSetComplete(${day.id}, '${ex.id}', ${sIdx}, ${ex.restSec || state.settings.defaultRestSeconds})"
+                          aria-label="Completar serie ${sIdx + 1}"
+                          class="w-11 h-11 rounded-xl flex items-center justify-center transition active:scale-90 border ${
+                            set.completed
+                              ? 'bg-neon border-neon text-white neon-glow-sm'
+                              : 'bg-surfaceLight border-borderSubtle text-textMuted hover:border-neon/50'
+                          }"
+                        >
+                          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 6 9 17l-5-5"/>
+                          </svg>
+                        </button>
+                      </div>
+                    `;
+                  })
+                  .join('');
+
+                return `
+                  <section class="bg-surface border border-borderSubtle rounded-2xl p-3.5 space-y-3">
+                    <div class="flex items-start justify-between gap-2">
+                      <div>
+                        <div class="flex items-center gap-2">
+                          <span class="text-[11px] font-extrabold text-neon bg-neon/10 px-2 py-0.5 rounded-md">#${exIdx + 1}</span>
+                          <h3 class="text-[15px] font-bold text-textMain leading-tight">${escapeHtml(ex.name)}</h3>
+                        </div>
+                        <p class="text-xs text-textMuted mt-1">
+                          Meta: <span class="text-textMain font-semibold">${ex.targetSets} × ${escapeHtml(ex.targetReps)}</span> · Descanso: ${ex.restSec || 90}s
+                        </p>
+                      </div>
+                    </div>
+
+                    ${prevNoteHtml}
+
+                    <!-- Encabezados de columnas -->
+                    <div class="grid grid-cols-[26px_1fr_68px_56px_48px_44px] gap-1.5 px-1.5 text-[10px] font-bold uppercase tracking-wider text-textMuted">
+                      <span class="text-center">#</span>
+                      <span>Anterior</span>
+                      <span class="text-center">Kg</span>
+                      <span class="text-center">Reps</span>
+                      <span class="text-center">RIR</span>
+                      <span class="text-center">OK</span>
+                    </div>
+
+                    <!-- Filas de series -->
+                    <div class="space-y-1.5">
+                      ${setsRowsHtml}
+                    </div>
+
+                    <!-- Controles de agregar / quitar serie -->
+                    <div class="flex items-center gap-2 pt-1">
+                      <button
+                        type="button"
+                        onclick="addSetToExercise(${day.id}, '${ex.id}')"
+                        class="flex-1 h-11 rounded-xl bg-surfaceLight border border-borderSubtle text-xs font-bold text-textMain hover:border-neon/50 active:scale-95 transition"
+                      >
+                        + Agregar serie
+                      </button>
+                      ${
+                        exDraft.sets.length > 1
+                          ? `<button
+                              type="button"
+                              onclick="removeLastSetFromExercise(${day.id}, '${ex.id}')"
+                              class="h-11 px-3.5 rounded-xl bg-surfaceLight border border-borderSubtle text-xs font-semibold text-textMuted hover:text-red-400 active:scale-95 transition"
+                            >
+                              - Quitar
+                            </button>`
+                          : ''
+                      }
+                    </div>
+
+                    <!-- Nota para la próxima + chip rápido -->
+                    <div class="pt-1 space-y-2 border-t border-borderSubtle/70">
+                      <div class="flex items-center justify-between gap-2">
+                        <label class="text-[11px] font-semibold text-textMuted">Nota para la próxima</label>
+                        <button
+                          type="button"
+                          onclick="insertQuickBumpNote(${day.id}, '${ex.id}')"
+                          class="px-2.5 py-1 rounded-lg bg-neon/15 border border-neon/40 text-[11px] font-bold text-neon active:scale-95 transition"
+                        >
+                          + Subir kg próxima
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Ej: Subir 2.5 kg la próxima"
+                        value="${escapeHtml(exDraft.note)}"
+                        oninput="updateExerciseNote(${day.id}, '${ex.id}', this.value)"
+                        class="w-full h-11 px-3 rounded-xl bg-oled border border-borderSubtle text-textMain placeholder:text-textMuted/60 focus:outline-none focus:border-neon"
+                      />
+                    </div>
+                  </section>
+                `;
+              })
+              .join('');
+
+      container.innerHTML = `
+        <!-- Selector de Días 1 a 4 -->
+        <div class="space-y-2.5">
+          <div class="grid grid-cols-4 gap-2">
+            ${dayPillsHtml}
+          </div>
+
+          <!-- Banner del día activo y progreso -->
+          <div class="bg-surface border border-borderSubtle rounded-2xl p-3.5 space-y-2.5">
+            <div class="flex items-center justify-between gap-2">
+              <div>
+                <span class="text-[10px] font-bold uppercase tracking-widest text-neon">Sesión Activa</span>
+                <h2 class="text-base font-extrabold text-textMain leading-tight">${escapeHtml(day.name)}</h2>
+              </div>
+              <span class="text-xs font-bold text-textMain bg-surfaceLight border border-borderSubtle px-2.5 py-1 rounded-xl tabular-nums">
+                ${completedSets}/${totalSets} series
+              </span>
+            </div>
+            <div class="w-full h-1.5 bg-oled rounded-full overflow-hidden">
+              <div class="h-full bg-neon transition-all duration-300 rounded-full" style="width: ${pct}%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lista de ejercicios -->
+        <div class="space-y-3.5">
+          ${exercisesHtml}
+        </div>
+
+        <!-- Botón finalizar entrenamiento -->
+        ${
+          day.exercises.length > 0
+            ? `
+              <div class="pt-2">
+                <button
+                  type="button"
+                  onclick="handleFinishWorkout(${day.id})"
+                  class="w-full h-14 rounded-2xl bg-neon hover:bg-neonStrong text-white font-extrabold text-sm tracking-wide neon-glow active:scale-[0.98] transition flex items-center justify-center gap-2"
+                >
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <path d="m9 11 3 3L22 4"/>
+                  </svg>
+                  Finalizar y Guardar Entrenamiento
+                </button>
+              </div>
+            `
+            : ''
+        }
+      `;
+    }
+
+    function selectTrainDay(dayId) {
+      state.draft.selectedDayId = dayId;
+      saveDraft();
+      renderCurrentTab();
+    }
+
+    function updateSetField(dayId, exId, setIdx, field, value) {
+      ensureDayDraft(dayId);
+      const set = state.draft.days[dayId][exId].sets[setIdx];
+      if (!set) return;
+      set[field] = value;
+      saveDraft();
+    }
+
+    function toggleSetComplete(dayId, exId, setIdx, suggestedRest) {
+      ensureDayDraft(dayId);
+      const set = state.draft.days[dayId][exId].sets[setIdx];
+      if (!set) return;
+      set.completed = !set.completed;
+      saveDraft();
+      renderCurrentTab();
+
+      if (set.completed && state.settings.autoStartRest) {
+        const rest = suggestedRest || state.settings.defaultRestSeconds || 90;
+        startRestTimer(rest);
+      }
+    }
+
+    function addSetToExercise(dayId, exId) {
+      ensureDayDraft(dayId);
+      const sets = state.draft.days[dayId][exId].sets;
+      const last = sets[sets.length - 1];
+      sets.push({
+        weight: last ? last.weight : '',
+        reps: last ? last.reps : '',
+        rir: '',
+        completed: false,
+      });
+      saveDraft();
+      renderCurrentTab();
+    }
+
+    function removeLastSetFromExercise(dayId, exId) {
+      ensureDayDraft(dayId);
+      const sets = state.draft.days[dayId][exId].sets;
+      if (sets.length <= 1) return;
+      sets.pop();
+      saveDraft();
+      renderCurrentTab();
+    }
+
+    function updateExerciseNote(dayId, exId, value) {
+      ensureDayDraft(dayId);
+      state.draft.days[dayId][exId].note = value;
+      saveDraft();
+    }
+
+    function insertQuickBumpNote(dayId, exId) {
+      ensureDayDraft(dayId);
+      const current = (state.draft.days[dayId][exId].note || '').trim();
+      const phrase = 'Subir 2.5 kg la próxima';
+      if (!current) {
+        state.draft.days[dayId][exId].note = phrase;
+      } else if (!current.toLowerCase().includes('subir')) {
+        state.draft.days[dayId][exId].note = `${current} · ${phrase}`;
+      }
+      saveDraft();
+      renderCurrentTab();
+      showToast('Recordatorio de carga agregado');
+    }
+
+    function handleFinishWorkout(dayId) {
+      const day = state.routine.find((d) => d.id === dayId);
+      const dayDraft = ensureDayDraft(dayId);
+
+      // Recolectar ejercicios con al menos una serie válida (completada o con peso/reps)
+      const completedExercises = [];
+      let totalCompletedSets = 0;
+      let totalVolume = 0;
+      const newPRs = [];
+
+      day.exercises.forEach((ex) => {
+        const exDraft = dayDraft[ex.id];
+        if (!exDraft) return;
+
+        // Priorizamos series tildadas; si no tildó ninguna en toda la sesión, permitimos guardar las que tengan peso y reps
+        const checkedSets = exDraft.sets.filter((s) => s.completed && (!isNaN(parseNum(s.weight)) || !isNaN(parseNum(s.reps))));
+        const filledSets = exDraft.sets.filter((s) => !isNaN(parseNum(s.weight)) && !isNaN(parseNum(s.reps)));
+        const validSets = checkedSets.length > 0 ? checkedSets : filledSets;
+
+        if (validSets.length > 0) {
+          // Verificar PR histórico antes de guardar
+          const prevMax = getHistoricalMaxWeight(ex.name);
+          let sessionMax = 0;
+
+          const cleanSets = validSets.map((s) => {
+            const w = isNaN(parseNum(s.weight)) ? 0 : parseNum(s.weight);
+            const r = isNaN(parseNum(s.reps)) ? 0 : Math.round(parseNum(s.reps));
+            const rirVal = isNaN(parseNum(s.rir)) ? null : Math.max(0, Math.min(10, Math.round(parseNum(s.rir))));
+            totalVolume += w * r;
+            if (w > sessionMax) sessionMax = w;
+            return { weight: w, reps: r, rir: rirVal, completed: true };
+          });
+
+          if (prevMax > 0 && sessionMax > prevMax) {
+            newPRs.push({ name: ex.name, weight: sessionMax });
+          }
+
+          totalCompletedSets += cleanSets.length;
+          completedExercises.push({
+            name: ex.name,
+            note: (exDraft.note || '').trim(),
+            sets: cleanSets,
+          });
+        }
+      });
+
+      if (completedExercises.length === 0) {
+        showToast('Cargá peso y reps en al menos una serie antes de guardar.', 'error');
+        return;
+      }
+
+      // Guardar sesión en historial
+      const newSession = {
+        id: `sess_${Date.now()}`,
+        date: new Date().toISOString(),
+        dayId: day.id,
+        dayName: day.name,
+        exercises: completedExercises,
+      };
+      state.history.unshift(newSession);
+      saveHistory();
+
+      // Limpiar borrador del día para la próxima sesión y frenar timer
+      delete state.draft.days[dayId];
+      saveDraft();
+      stopTimer();
+      renderCurrentTab();
+
+      // Mostrar modal de resumen
+      const prsHtml =
+        newPRs.length > 0
+          ? `
+            <div class="bg-neon/10 border border-neon/40 rounded-2xl p-3 space-y-1">
+              <p class="text-xs font-extrabold text-neon uppercase tracking-wider">¡Nuevos Récords Personales!</p>
+              ${newPRs.map((p) => `<p class="text-xs text-textMain font-semibold">• ${escapeHtml(p.name)}: <span class="text-neon">${p.weight} kg</span></p>`).join('')}
+            </div>
+          `
+          : '';
+
+      openModal(`
+        <div class="space-y-4 text-center">
+          <div class="w-14 h-14 mx-auto rounded-2xl bg-neon/15 border border-neon/50 flex items-center justify-center neon-glow-sm">
+            <svg class="w-7 h-7 text-neon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 6 9 17l-5-5"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-extrabold text-textMain">¡Entrenamiento Guardado!</h3>
+            <p class="text-xs text-textMuted mt-1">${escapeHtml(day.name)}</p>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <div class="bg-oled border border-borderSubtle rounded-2xl p-3">
+              <p class="text-[10px] text-textMuted uppercase font-bold">Ejercicios</p>
+              <p class="text-lg font-extrabold text-textMain mt-0.5">${completedExercises.length}</p>
+            </div>
+            <div class="bg-oled border border-borderSubtle rounded-2xl p-3">
+              <p class="text-[10px] text-textMuted uppercase font-bold">Series</p>
+              <p class="text-lg font-extrabold text-neon mt-0.5">${totalCompletedSets}</p>
+            </div>
+            <div class="bg-oled border border-borderSubtle rounded-2xl p-3">
+              <p class="text-[10px] text-textMuted uppercase font-bold">Volumen</p>
+              <p class="text-base font-extrabold text-textMain mt-0.5">${Math.round(totalVolume).toLocaleString('es-AR')} kg</p>
+            </div>
+          </div>
+          ${prsHtml}
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <button type="button" onclick="closeModal(); switchTab('progress');" class="h-12 rounded-xl bg-surfaceLight border border-borderSubtle text-xs font-bold text-textMain">
+              Ver Progreso
+            </button>
+            <button type="button" onclick="closeModal();" class="h-12 rounded-xl bg-neon text-white text-xs font-extrabold neon-glow-sm">
+              Listo
+            </button>
+          </div>
+        </div>
+      `);
+    }
+
+    function getHistoricalMaxWeight(exerciseName) {
+      const target = exerciseName.trim().toLowerCase();
+      let max = 0;
+      state.history.forEach((sess) => {
+        (sess.exercises || []).forEach((e) => {
+          if (e.name.trim().toLowerCase() === target) {
+            (e.sets || []).forEach((s) => {
+              if (Number(s.weight) > max) max = Number(s.weight);
+            });
+          }
+        });
+      });
+      return max;
+    }
+
+    /* =========================================================================
+       PESTAÑA 2: RUTINA (EDITOR COMPLETO DE LOS 4 DÍAS)
+       ========================================================================= */
+    function renderRoutineTab(container) {
+      const dayId = state.routineSelectedDayId || 1;
+      const day = state.routine.find((d) => d.id === dayId) || state.routine[0];
+
+      const dayPillsHtml = state.routine
+        .map((d) => {
+          const active = d.id === day.id;
+          return `
+            <button
+              type="button"
+              onclick="selectRoutineDay(${d.id})"
+              class="h-11 rounded-xl font-bold text-xs transition active:scale-95 border ${
+                active
+                  ? 'bg-neon text-white border-neon neon-glow-sm'
+                  : 'bg-surface text-textMuted border-borderSubtle hover:text-textMain'
+              }"
+            >
+              Día ${d.id}
+            </button>
+          `;
+        })
+        .join('');
+
+      const listHtml =
+        day.exercises.length === 0
+          ? `<div class="bg-surface border border-borderSubtle rounded-2xl p-6 text-center text-xs text-textMuted">Sin ejercicios en este día. Tocá "+ Agregar Ejercicio" abajo.</div>`
+          : day.exercises
+              .map(
+                (ex, idx) => `
+              <div class="bg-surface border border-borderSubtle rounded-2xl p-3.5 flex items-center justify-between gap-2">
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm font-bold text-textMain truncate">${escapeHtml(ex.name)}</p>
+                  <p class="text-xs text-textMuted mt-0.5">${ex.targetSets} series × ${escapeHtml(ex.targetReps)} reps · ${ex.restSec || 90}s desc.</p>
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onclick="moveExercise(${day.id}, ${idx}, -1)"
+                    ${idx === 0 ? 'disabled' : ''}
+                    aria-label="Subir"
+                    class="w-10 h-10 rounded-xl bg-surfaceLight border border-borderSubtle flex items-center justify-center text-textMain disabled:opacity-30 active:scale-95 transition"
+                  >
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="m18 15-6-6-6 6"/></svg>
+                  </button>
+                  <button
+                    type="button"
+                    onclick="moveExercise(${day.id}, ${idx}, 1)"
+                    ${idx === day.exercises.length - 1 ? 'disabled' : ''}
+                    aria-label="Bajar"
+                    class="w-10 h-10 rounded-xl bg-surfaceLight border border-borderSubtle flex items-center justify-center text-textMain disabled:opacity-30 active:scale-95 transition"
+                  >
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+                  </button>
+                  <button
+                    type="button"
+                    onclick="openExerciseModal(${day.id}, '${ex.id}')"
+                    aria-label="Editar"
+                    class="w-10 h-10 rounded-xl bg-surfaceLight border border-borderSubtle flex items-center justify-center text-neon active:scale-95 transition"
+                  >
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                  </button>
+                  <button
+                    type="button"
+                    onclick="confirmDeleteExercise(${day.id}, '${ex.id}')"
+                    aria-label="Eliminar"
+                    class="w-10 h-10 rounded-xl bg-surfaceLight border border-borderSubtle flex items-center justify-center text-textMuted hover:text-red-400 active:scale-95 transition"
+                  >
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
+                </div>
+              </div>
+            `
+              )
+              .join('');
+
+      container.innerHTML = `
+        <div class="space-y-3">
+          <div>
+            <h2 class="text-lg font-extrabold text-textMain">Editar Rutina</h2>
+            <p class="text-xs text-textMuted">Personalizá los 4 días, ejercicios, series y tiempos de descanso.</p>
+          </div>
+
+          <div class="grid grid-cols-4 gap-2">
+            ${dayPillsHtml}
+          </div>
+
+          <!-- Nombre editable del día -->
+          <div class="bg-surface border border-borderSubtle rounded-2xl p-3.5 space-y-1.5">
+            <label class="text-[11px] font-bold uppercase tracking-wider text-textMuted">Nombre del Día ${day.id}</label>
+            <input
+              type="text"
+              value="${escapeHtml(day.name)}"
+              oninput="updateDayName(${day.id}, this.value)"
+              class="w-full h-11 px-3 rounded-xl bg-oled border border-borderSubtle text-textMain font-semibold focus:outline-none focus:border-neon"
+            />
+          </div>
+
+          <!-- Lista de ejercicios -->
+          <div class="space-y-2.5">
+            ${listHtml}
+          </div>
+
+          <!-- Botón agregar ejercicio -->
+          <button
+            type="button"
+            onclick="openExerciseModal(${day.id}, null)"
+            class="w-full h-12 rounded-2xl bg-neon text-white font-extrabold text-sm neon-glow active:scale-[0.98] transition flex items-center justify-center gap-2"
+          >
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            Agregar Ejercicio
+          </button>
+        </div>
+      `;
+    }
+
+    function selectRoutineDay(dayId) {
+      state.routineSelectedDayId = dayId;
+      renderCurrentTab();
+    }
+
+    function updateDayName(dayId, newName) {
+      const day = state.routine.find((d) => d.id === dayId);
+      if (day) {
+        day.name = newName;
+        saveRoutine();
+      }
+    }
+
+    function moveExercise(dayId, index, delta) {
+      const day = state.routine.find((d) => d.id === dayId);
+      if (!day) return;
+      const targetIdx = index + delta;
+      if (targetIdx < 0 || targetIdx >= day.exercises.length) return;
+      const temp = day.exercises[index];
+      day.exercises[index] = day.exercises[targetIdx];
+      day.exercises[targetIdx] = temp;
+      saveRoutine();
+      renderCurrentTab();
+    }
+
+    function openExerciseModal(dayId, exId) {
+      const day = state.routine.find((d) => d.id === dayId);
+      if (!day) return;
+      const existing = exId ? day.exercises.find((e) => e.id === exId) : null;
+
+      openModal(`
+        <form onsubmit="saveExerciseFromModal(event, ${dayId}, '${exId || ''}')" class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-extrabold text-textMain">${existing ? 'Editar Ejercicio' : 'Nuevo Ejercicio'}</h3>
+            <button type="button" onclick="closeModal()" class="w-9 h-9 rounded-xl bg-surfaceLight text-textMuted flex items-center justify-center">✕</button>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="text-xs font-semibold text-textMuted">Nombre del ejercicio</label>
+            <input id="ex-form-name" type="text" required placeholder="Ej: Press Banca con Mancuernas" value="${escapeHtml(existing ? existing.name : '')}" class="w-full h-11 px-3 rounded-xl bg-oled border border-borderSubtle text-textMain focus:outline-none focus:border-neon" />
+          </div>
+
+          <div class="grid grid-cols-3 gap-2.5">
+            <div class="space-y-1.5">
+              <label class="text-xs font-semibold text-textMuted">Series</label>
+              <input id="ex-form-sets" type="number" inputmode="numeric" min="1" max="12" required value="${existing ? existing.targetSets : 3}" class="w-full h-11 px-3 rounded-xl bg-oled border border-borderSubtle text-textMain text-center focus:outline-none focus:border-neon" />
+            </div>
+            <div class="space-y-1.5">
+              <label class="text-xs font-semibold text-textMuted">Reps obj.</label>
+              <input id="ex-form-reps" type="text" required placeholder="8-10" value="${escapeHtml(existing ? existing.targetReps : '8-10')}" class="w-full h-11 px-3 rounded-xl bg-oled border border-borderSubtle text-textMain text-center focus:outline-none focus:border-neon" />
+            </div>
+            <div class="space-y-1.5">
+              <label class="text-xs font-semibold text-textMuted">Desc. (seg)</label>
+              <input id="ex-form-rest" type="number" inputmode="numeric" min="15" max="600" step="15" required value="${existing ? existing.restSec || 90 : 90}" class="w-full h-11 px-3 rounded-xl bg-oled border border-borderSubtle text-textMain text-center focus:outline-none focus:border-neon" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 pt-2">
+            <button type="button" onclick="closeModal()" class="h-12 rounded-xl bg-surfaceLight border border-borderSubtle text-xs font-bold text-textMuted">Cancelar</button>
+            <button type="submit" class="h-12 rounded-xl bg-neon text-white text-xs font-extrabold neon-glow-sm">Guardar</button>
+          </div>
+        </form>
+      `);
+    }
+
+    function saveExerciseFromModal(event, dayId, exId) {
+      event.preventDefault();
+      const day = state.routine.find((d) => d.id === dayId);
+      if (!day) return;
+
+      const name = document.getElementById('ex-form-name').value.trim();
+      const targetSets = Math.max(1, parseInt(document.getElementById('ex-form-sets').value, 10) || 3);
+      const targetReps = document.getElementById('ex-form-reps').value.trim() || '8-10';
+      const restSec = Math.max(15, parseInt(document.getElementById('ex-form-rest').value, 10) || 90);
+
+      if (!name) return;
+
+      if (exId) {
+        const ex = day.exercises.find((e) => e.id === exId);
+        if (ex) {
+          ex.name = name;
+          ex.targetSets = targetSets;
+          ex.targetReps = targetReps;
+          ex.restSec = restSec;
+        }
+        showToast('Ejercicio actualizado');
+      } else {
+        day.exercises.push({
+          id: `ex_${Date.now()}`,
+          name,
+          targetSets,
+          targetReps,
+          restSec,
+        });
+        showToast('Ejercicio agregado');
+      }
+
+      saveRoutine();
+      closeModal();
+      renderCurrentTab();
+    }
+
+    function confirmDeleteExercise(dayId, exId) {
+      const day = state.routine.find((d) => d.id === dayId);
+      const ex = day ? day.exercises.find((e) => e.id === exId) : null;
+      if (!ex) return;
+
+      openModal(`
+        <div class="space-y-4">
+          <h3 class="text-base font-extrabold text-textMain">¿Eliminar ejercicio?</h3>
+          <p class="text-xs text-textMuted leading-relaxed">
+            Se quitará <span class="text-textMain font-bold">${escapeHtml(ex.name)}</span> del Día ${dayId}. Tu historial pasado no se borra.
+          </p>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="closeModal()" class="h-12 rounded-xl bg-surfaceLight border border-borderSubtle text-xs font-bold text-textMain">Cancelar</button>
+            <button type="button" onclick="deleteExercise(${dayId}, '${exId}')" class="h-12 rounded-xl bg-red-600 text-white text-xs font-extrabold">Eliminar</button>
+          </div>
+        </div>
+      `);
+    }
+
+    function deleteExercise(dayId, exId) {
+      const day = state.routine.find((d) => d.id === dayId);
+      if (!day) return;
+      day.exercises = day.exercises.filter((e) => e.id !== exId);
+      if (state.draft.days[dayId] && state.draft.days[dayId][exId]) {
+        delete state.draft.days[dayId][exId];
+        saveDraft();
+      }
+      saveRoutine();
+      closeModal();
+      renderCurrentTab();
+      showToast('Ejercicio eliminado');
+    }
+
+    /* =========================================================================
+       PESTAÑA 3: PROGRESO (GRÁFICO SVG INTERACTIVO + KPIS + HISTORIAL)
+       ========================================================================= */
+    function getAllExerciseNames() {
+      const set = new Set();
+      state.history.forEach((s) => (s.exercises || []).forEach((e) => set.add(e.name.trim())));
+      state.routine.forEach((d) => d.exercises.forEach((e) => set.add(e.name.trim())));
+      return Array.from(set).filter(Boolean);
+    }
+
+    function getExerciseSeriesData(exerciseName) {
+      const target = exerciseName.trim().toLowerCase();
+      // Orden cronológico ascendente para el gráfico
+      const sorted = [...state.history].sort((a, b) => new Date(a.date) - new Date(b.date));
+      const points = [];
+
+      sorted.forEach((session) => {
+        const found = (session.exercises || []).find((e) => e.name.trim().toLowerCase() === target);
+        if (!found || !found.sets || found.sets.length === 0) return;
+
+        let maxWeight = 0;
+        let max1RM = 0;
+        let volume = 0;
+        let bestSet = found.sets[0];
+
+        found.sets.forEach((s) => {
+          const w = Number(s.weight) || 0;
+          const r = Number(s.reps) || 0;
+          const e1rm = calcEpley1RM(w, r);
+          volume += w * r;
+          if (w > maxWeight || (w === maxWeight && r > (Number(bestSet.reps) || 0))) {
+            maxWeight = w;
+            bestSet = s;
+          }
+          if (e1rm > max1RM) max1RM = e1rm;
+        });
+
+        points.push({
+          sessionId: session.id,
+          date: session.date,
+          maxWeight: Number(maxWeight.toFixed(1)),
+          est1RM: Number(max1RM.toFixed(1)),
+          volume: Math.round(volume),
+          bestSet,
+          note: found.note || '',
+        });
+      });
+
+      return points;
+    }
+
+    function buildProgressSVG(points, metric) {
+      const width = 360;
+      const height = 195;
+      const padL = 42;
+      const padR = 18;
+      const padT = 22;
+      const padB = 30;
+      const chartW = width - padL - padR;
+      const chartH = height - padT - padB;
+
+      const values = points.map((p) => p[metric]);
+      const minVal = Math.min(...values);
+      const maxVal = Math.max(...values);
+      const range = maxVal - minVal;
+      const yMin = range === 0 ? Math.max(0, minVal - 5) : Math.max(0, minVal - range * 0.18);
+      const yMax = range === 0 ? maxVal + 5 : maxVal + range * 0.18;
+      const ySpan = yMax - yMin || 1;
+
+      const coords = points.map((p, idx) => {
+        const x = points.length === 1 ? padL + chartW / 2 : padL + (idx / (points.length - 1)) * chartW;
+        const y = padT + chartH - ((p[metric] - yMin) / ySpan) * chartH;
+        return { x, y, p, idx };
+      });
+
+      // Líneas de grilla horizontales (4 niveles)
+      const gridLines = [0, 0.33, 0.66, 1]
+        .map((t) => {
+          const y = padT + chartH * t;
+          const val = yMax - ySpan * t;
+          const label = metric === 'volume' ? Math.round(val) : val.toFixed(1).replace(/\.0$/, '');
+          return `
+            <line x1="${padL}" y1="${y}" x2="${width - padR}" y2="${y}" stroke="#1E1E24" stroke-width="1" stroke-dasharray="3 3" />
+            <text x="${padL - 6}" y="${y + 3.5}" text-anchor="end" fill="#8A8A96" font-size="10" font-weight="600">${label}</text>
+          `;
+        })
+        .join('');
+
+      const linePath = coords.map((c, i) => `${i === 0 ? 'M' : 'L'} ${c.x.toFixed(1)} ${c.y.toFixed(1)}`).join(' ');
+      const areaPath =
+        coords.length > 1
+          ? `${linePath} L ${coords[coords.length - 1].x.toFixed(1)} ${(padT + chartH).toFixed(1)} L ${coords[0].x.toFixed(1)} ${(padT + chartH).toFixed(1)} Z`
+          : '';
+
+      // Etiquetas eje X (primera, intermedia si hay, última)
+      const xLabelsIdx = new Set([0, coords.length - 1]);
+      if (coords.length >= 4) xLabelsIdx.add(Math.floor(coords.length / 2));
+      const xLabels = Array.from(xLabelsIdx)
+        .map((i) => {
+          const c = coords[i];
+          return `<text x="${c.x.toFixed(1)}" y="${height - 8}" text-anchor="middle" fill="#8A8A96" font-size="10" font-weight="600">${formatShortDate(c.p.date)}</text>`;
+        })
+        .join('');
+
+      const activeIdx =
+        state.progressSelectedPointIdx !== null && state.progressSelectedPointIdx < coords.length
+          ? state.progressSelectedPointIdx
+          : coords.length - 1;
+
+      const circles = coords
+        .map((c) => {
+          const isSelected = c.idx === activeIdx;
+          return `
+            <g class="cursor-pointer" onclick="selectChartPoint(${c.idx})">
+              <circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="16" fill="transparent" />
+              ${isSelected ? `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="8" fill="#FF2E93" fill-opacity="0.25" />` : ''}
+              <circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${isSelected ? 5 : 3.8}" fill="${isSelected ? '#FF2E93' : '#000000'}" stroke="#FF2E93" stroke-width="2.4" />
+            </g>
+          `;
+        })
+        .join('');
+
+      return `
+        <svg viewBox="0 0 ${width} ${height}" class="w-full h-auto overflow-visible select-none">
+          <defs>
+            <linearGradient id="neonAreaGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#FF2E93" stop-opacity="0.34" />
+              <stop offset="100%" stop-color="#FF2E93" stop-opacity="0.0" />
+            </linearGradient>
+            <filter id="neonLineGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="2.5" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+          ${gridLines}
+          ${areaPath ? `<path d="${areaPath}" fill="url(#neonAreaGrad)" />` : ''}
+          ${coords.length > 1 ? `<path d="${linePath}" fill="none" stroke="#FF2E93" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#neonLineGlow)" />` : ''}
+          ${xLabels}
+          ${circles}
+        </svg>
+      `;
+    }
+
+    function renderProgressTab(container) {
+      const allExercises = getAllExerciseNames();
+      if (!state.progressSelectedExercise || !allExercises.includes(state.progressSelectedExercise)) {
+        // Preferir el primer ejercicio que tenga historial
+        const firstWithData = allExercises.find((name) => getExerciseSeriesData(name).length > 0);
+        state.progressSelectedExercise = firstWithData || allExercises[0] || '';
+      }
+
+      const points = state.progressSelectedExercise ? getExerciseSeriesData(state.progressSelectedExercise) : [];
+      const metric = state.progressMetric;
+
+      // KPIs
+      let prWeight = 0;
+      let latestWeight = 0;
+      let trendStr = '—';
+      let trendColor = 'text-textMuted';
+
+      if (points.length > 0) {
+        prWeight = Math.max(...points.map((p) => p.maxWeight));
+        latestWeight = points[points.length - 1].maxWeight;
+        const diff = Number((latestWeight - points[0].maxWeight).toFixed(1));
+        if (points.length === 1) {
+          trendStr = 'Inicio';
+        } else if (diff > 0) {
+          trendStr = `+${diff} kg`;
+          trendColor = 'text-neon';
+        } else if (diff < 0) {
+          trendStr = `${diff} kg`;
+          trendColor = 'text-red-400';
+        } else {
+          trendStr = '0 kg';
+        }
+      }
+
+      const selectedPoint =
+        points.length > 0
+          ? points[
+              state.progressSelectedPointIdx !== null && state.progressSelectedPointIdx < points.length
+                ? state.progressSelectedPointIdx
+                : points.length - 1
+            ]
+          : null;
+
+      const metricLabel = metric === 'maxWeight' ? 'Peso Máx' : metric === 'est1RM' ? '1RM Est.' : 'Volumen';
+
+      const exerciseOptionsHtml = allExercises
+        .map(
+          (name) =>
+            `<option value="${escapeHtml(name)}" ${name === state.progressSelectedExercise ? 'selected' : ''}>${escapeHtml(name)}</option>`
+        )
+        .join('');
+
+      const exerciseHistoryHtml =
+        points.length === 0
+          ? ''
+          : [...points]
+              .reverse()
+              .map(
+                (p) => `
+              <div class="bg-oled border border-borderSubtle rounded-xl p-3 flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <p class="text-xs font-bold text-textMain">${formatFullDate(p.date)}</p>
+                  <p class="text-[11px] text-textMuted mt-0.5">
+                    Mejor serie: <span class="text-textMain font-semibold">${p.bestSet.weight}kg × ${p.bestSet.reps}</span>
+                    ${p.bestSet.rir !== null && p.bestSet.rir !== undefined ? ` · RIR ${p.bestSet.rir}` : ''}
+                  </p>
+                  ${p.note ? `<p class="text-[11px] text-neon mt-1 truncate">Nota: ${escapeHtml(p.note)}</p>` : ''}
+                </div>
+                <span class="text-xs font-extrabold text-neon bg-neon/10 px-2.5 py-1 rounded-lg shrink-0">${p.maxWeight} kg</span>
+              </div>
+            `
+              )
+              .join('');
+
+      const generalHistoryHtml =
+        state.history.length === 0
+          ? `<p class="text-xs text-textMuted text-center py-3">Aún no hay entrenamientos guardados.</p>`
+          : state.history
+              .slice(0, 15)
+              .map((s) => {
+                const vol = (s.exercises || []).reduce(
+                  (acc, ex) => acc + (ex.sets || []).reduce((a, st) => a + (Number(st.weight) || 0) * (Number(st.reps) || 0), 0),
+                  0
+                );
+                return `
+                  <div class="bg-oled border border-borderSubtle rounded-xl p-3 flex items-center justify-between gap-2">
+                    <div class="min-w-0">
+                      <p class="text-xs font-bold text-textMain truncate">${escapeHtml(s.dayName)}</p>
+                      <p class="text-[11px] text-textMuted mt-0.5">${formatFullDate(s.date)} · ${(s.exercises || []).length} ej. · ${Math.round(vol).toLocaleString('es-AR')} kg vol.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onclick="confirmDeleteSession('${s.id}')"
+                      aria-label="Eliminar sesión"
+                      class="w-10 h-10 rounded-xl bg-surfaceLight border border-borderSubtle text-textMuted hover:text-red-400 flex items-center justify-center shrink-0 active:scale-95 transition"
+                    >
+                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
+                  </div>
+                `;
+              })
+              .join('');
+
+      container.innerHTML = `
+        <div class="space-y-4">
+          <div>
+            <h2 class="text-lg font-extrabold text-textMain">Progreso y Avances</h2>
+            <p class="text-xs text-textMuted">Seguimiento de sobrecarga progresiva por ejercicio.</p>
+          </div>
+
+          <!-- Selector de ejercicio -->
+          <div class="space-y-1.5">
+            <label class="text-[11px] font-bold uppercase tracking-wider text-textMuted">Ejercicio</label>
+            <select
+              onchange="selectProgressExercise(this.value)"
+              class="w-full h-12 px-3 rounded-2xl bg-surface border border-borderSubtle text-textMain font-semibold focus:outline-none focus:border-neon"
+            >
+              ${exerciseOptionsHtml}
+            </select>
+          </div>
+
+          <!-- Tarjetas KPI -->
+          <div class="grid grid-cols-3 gap-2">
+            <div class="bg-surface border border-borderSubtle rounded-2xl p-3">
+              <p class="text-[10px] font-bold uppercase tracking-wider text-textMuted">Récord (PR)</p>
+              <p class="text-base font-extrabold text-neon mt-1">${points.length ? `${prWeight} kg` : '—'}</p>
+            </div>
+            <div class="bg-surface border border-borderSubtle rounded-2xl p-3">
+              <p class="text-[10px] font-bold uppercase tracking-wider text-textMuted">Última</p>
+              <p class="text-base font-extrabold text-textMain mt-1">${points.length ? `${latestWeight} kg` : '—'}</p>
+            </div>
+            <div class="bg-surface border border-borderSubtle rounded-2xl p-3">
+              <p class="text-[10px] font-bold uppercase tracking-wider text-textMuted">Tendencia</p>
+              <p class="text-base font-extrabold ${trendColor} mt-1">${trendStr}</p>
+            </div>
+          </div>
+
+          <!-- Selector de métrica + Gráfico -->
+          <div class="bg-surface border border-borderSubtle rounded-2xl p-4 space-y-3">
+            <div class="grid grid-cols-3 gap-1.5 bg-oled p-1 rounded-xl border border-borderSubtle">
+              ${[
+                { id: 'maxWeight', label: 'Peso Máx' },
+                { id: 'est1RM', label: '1RM Est.' },
+                { id: 'volume', label: 'Volumen' },
+              ]
+                .map(
+                  (m) => `
+                <button
+                  type="button"
+                  onclick="selectProgressMetric('${m.id}')"
+                  class="h-9 rounded-lg text-xs font-bold transition ${
+                    metric === m.id ? 'bg-neon text-white neon-glow-sm' : 'text-textMuted hover:text-textMain'
+                  }"
+                >
+                  ${m.label}
+                </button>
+              `
+                )
+                .join('')}
+            </div>
+
+            ${
+              points.length === 0
+                ? `
+                  <div class="py-8 text-center space-y-3">
+                    <p class="text-xs text-textMuted max-w-xs mx-auto leading-relaxed">
+                      Todavía no tenés registros para <span class="text-textMain font-semibold">${escapeHtml(state.progressSelectedExercise)}</span>. Completá tu primer entrenamiento para ver tu curva de progreso.
+                    </p>
+                    ${
+                      state.history.length === 0
+                        ? `<button type="button" onclick="loadSampleData()" class="h-10 px-4 rounded-xl bg-surfaceLight border border-neon/40 text-xs font-bold text-neon active:scale-95 transition">
+                            Cargar datos de ejemplo
+                          </button>`
+                        : ''
+                    }
+                  </div>
+                `
+                : `
+                  <!-- Tooltip interactivo del punto seleccionado -->
+                  <div class="flex items-center justify-between bg-oled border border-borderSubtle rounded-xl px-3 py-2">
+                    <div>
+                      <p class="text-[11px] text-textMuted font-medium">${formatFullDate(selectedPoint.date)}</p>
+                      <p class="text-xs text-textMain font-semibold">Mejor serie: ${selectedPoint.bestSet.weight}kg × ${selectedPoint.bestSet.reps}</p>
+                    </div>
+                    <div class="text-right">
+                      <p class="text-[10px] text-textMuted uppercase font-bold">${metricLabel}</p>
+                      <p class="text-sm font-extrabold text-neon">${selectedPoint[metric]} kg</p>
+                    </div>
+                  </div>
+
+                  <!-- SVG Responsivo -->
+                  <div class="pt-1">
+                    ${buildProgressSVG(points, metric)}
+                  </div>
+                  <p class="text-[10px] text-textMuted text-center">Tocá cualquier punto de la curva para ver el detalle.</p>
+                `
+            }
+          </div>
+
+          <!-- Historial del ejercicio seleccionado -->
+          ${
+            points.length > 0
+              ? `
+                <div class="bg-surface border border-borderSubtle rounded-2xl p-4 space-y-2.5">
+                  <h3 class="text-xs font-extrabold uppercase tracking-wider text-textMuted">Historial de ${escapeHtml(state.progressSelectedExercise)}</h3>
+                  <div class="space-y-2">${exerciseHistoryHtml}</div>
+                </div>
+              `
+              : ''
+          }
+
+          <!-- Historial general de sesiones -->
+          <div class="bg-surface border border-borderSubtle rounded-2xl p-4 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-extrabold uppercase tracking-wider text-textMuted">Sesiones Recientes (${state.history.length})</h3>
+            </div>
+            <div class="space-y-2">${generalHistoryHtml}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function selectProgressExercise(name) {
+      state.progressSelectedExercise = name;
+      state.progressSelectedPointIdx = null;
+      renderCurrentTab();
+    }
+
+    function selectProgressMetric(metric) {
+      state.progressMetric = metric;
+      renderCurrentTab();
+    }
+
+    function selectChartPoint(idx) {
+      state.progressSelectedPointIdx = idx;
+      renderCurrentTab();
+    }
+
+    function confirmDeleteSession(sessionId) {
+      openModal(`
+        <div class="space-y-4">
+          <h3 class="text-base font-extrabold text-textMain">¿Borrar entrenamiento?</h3>
+          <p class="text-xs text-textMuted">Esta sesión se eliminará de tu historial y de los gráficos de progreso.</p>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="closeModal()" class="h-12 rounded-xl bg-surfaceLight border border-borderSubtle text-xs font-bold text-textMain">Cancelar</button>
+            <button type="button" onclick="deleteSession('${sessionId}')" class="h-12 rounded-xl bg-red-600 text-white text-xs font-extrabold">Eliminar</button>
+          </div>
+        </div>
+      `);
+    }
+
+    function deleteSession(sessionId) {
+      state.history = state.history.filter((s) => s.id !== sessionId);
+      state.progressSelectedPointIdx = null;
+      saveHistory();
+      closeModal();
+      renderCurrentTab();
+      showToast('Sesión eliminada');
+    }
+
+    // Datos de ejemplo opcionales para probar el gráfico
+    function loadSampleData() {
+      const now = Date.now();
+      const dayMs = 86400000;
+      const sample = [
+        {
+          id: 'sample_4',
+          date: new Date(now - 1 * dayMs).toISOString(),
+          dayId: 1,
+          dayName: 'Torso A (Pecho & Espalda)',
+          exercises: [
+            {
+              name: 'Press de Banca Plano',
+              note: 'Subir 2.5 kg la próxima',
+              sets: [
+                { weight: 70, reps: 8, rir: 2, completed: true },
+                { weight: 70, reps: 8, rir: 1, completed: true },
+                { weight: 67.5, reps: 8, rir: 2, completed: true },
+              ],
+            },
+            {
+              name: 'Remo con Barra',
+              note: 'Buena técnica',
+              sets: [
+                { weight: 65, reps: 10, rir: 2, completed: true },
+                { weight: 65, reps: 9, rir: 1, completed: true },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'sample_3',
+          date: new Date(now - 8 * dayMs).toISOString(),
+          dayId: 1,
+          dayName: 'Torso A (Pecho & Espalda)',
+          exercises: [
+            {
+              name: 'Press de Banca Plano',
+              note: 'Salió sólido',
+              sets: [
+                { weight: 67.5, reps: 8, rir: 2, completed: true },
+                { weight: 67.5, reps: 7, rir: 1, completed: true },
+                { weight: 65, reps: 8, rir: 2, completed: true },
+              ],
+            },
+            {
+              name: 'Remo con Barra',
+              note: '',
+              sets: [
+                { weight: 62.5, reps: 10, rir: 2, completed: true },
+                { weight: 62.5, reps: 10, rir: 2, completed: true },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'sample_2',
+          date: new Date(now - 15 * dayMs).toISOString(),
+          dayId: 1,
+          dayName: 'Torso A (Pecho & Espalda)',
+          exercises: [
+            {
+              name: 'Press de Banca Plano',
+              note: '',
+              sets: [
+                { weight: 65, reps: 8, rir: 2, completed: true },
+                { weight: 65, reps: 8, rir: 2, completed: true },
+                { weight: 62.5, reps: 8, rir: 2, completed: true },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'sample_1',
+          date: new Date(now - 22 * dayMs).toISOString(),
+          dayId: 1,
+          dayName: 'Torso A (Pecho & Espalda)',
+          exercises: [
+            {
+              name: 'Press de Banca Plano',
+              note: 'Primera semana',
+              sets: [
+                { weight: 60, reps: 8, rir: 3, completed: true },
+                { weight: 60, reps: 8, rir: 2, completed: true },
+                { weight: 60, reps: 7, rir: 2, completed: true },
+              ],
+            },
+          ],
+        },
+      ];
+
+      state.history = [...sample, ...state.history];
+      state.progressSelectedExercise = 'Press de Banca Plano';
+      state.progressSelectedPointIdx = null;
+      saveHistory();
+      renderCurrentTab();
+      showToast('Datos de ejemplo cargados (podés borrarlos en Ajustes)');
+    }
+
+    /* =========================================================================
+       PESTAÑA 4: AJUSTES (CRONÓMETRO, BACKUP JSON, EXCEL CSV, RESET)
+       ========================================================================= */
+    function renderSettingsTab(container) {
+      const s = state.settings;
+
+      container.innerHTML = `
+        <div class="space-y-4">
+          <div>
+            <h2 class="text-lg font-extrabold text-textMain">Ajustes y Datos</h2>
+            <p class="text-xs text-textMuted">Configurá el descanso y gestioná tus copias de seguridad.</p>
+          </div>
+
+          <!-- Configuración del cronómetro -->
+          <section class="bg-surface border border-borderSubtle rounded-2xl p-4 space-y-4">
+            <h3 class="text-xs font-extrabold uppercase tracking-wider text-neon">Cronómetro de Descanso</h3>
+
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <p class="text-sm font-bold text-textMain">Inicio automático</p>
+                <p class="text-xs text-textMuted">Arranca al tildar una serie completada (✓)</p>
+              </div>
+              <button
+                type="button"
+                onclick="toggleSetting('autoStartRest')"
+                class="w-14 h-8 rounded-full p-1 transition ${s.autoStartRest ? 'bg-neon neon-glow-sm' : 'bg-borderSubtle'}"
+                aria-label="Activar o desactivar inicio automático"
+              >
+                <div class="w-6 h-6 rounded-full bg-white transition-transform ${s.autoStartRest ? 'translate-x-6' : 'translate-x-0'}"></div>
+              </button>
+            </div>
+
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <p class="text-sm font-bold text-textMain">Sonido al terminar</p>
+                <p class="text-xs text-textMuted">Pitido suave al llegar a 00:00</p>
+              </div>
+              <button
+                type="button"
+                onclick="toggleSetting('soundEnabled')"
+                class="w-14 h-8 rounded-full p-1 transition ${s.soundEnabled ? 'bg-neon neon-glow-sm' : 'bg-borderSubtle'}"
+                aria-label="Activar o desactivar sonido"
+              >
+                <div class="w-6 h-6 rounded-full bg-white transition-transform ${s.soundEnabled ? 'translate-x-6' : 'translate-x-0'}"></div>
+              </button>
+            </div>
+
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <p class="text-sm font-bold text-textMain">Vibración</p>
+                <p class="text-xs text-textMuted">Vibrar al finalizar el descanso</p>
+              </div>
+              <button
+                type="button"
+                onclick="toggleSetting('vibrateEnabled')"
+                class="w-14 h-8 rounded-full p-1 transition ${s.vibrateEnabled ? 'bg-neon neon-glow-sm' : 'bg-borderSubtle'}"
+                aria-label="Activar o desactivar vibración"
+              >
+                <div class="w-6 h-6 rounded-full bg-white transition-transform ${s.vibrateEnabled ? 'translate-x-6' : 'translate-x-0'}"></div>
+              </button>
+            </div>
+
+            <div class="space-y-2 pt-1 border-t border-borderSubtle/70">
+              <p class="text-xs font-semibold text-textMuted">Tiempo predeterminado (si el ejercicio no define otro)</p>
+              <div class="grid grid-cols-4 gap-2">
+                ${[60, 90, 120, 180]
+                  .map(
+                    (sec) => `
+                  <button
+                    type="button"
+                    onclick="setDefaultRest(${sec})"
+                    class="h-11 rounded-xl text-xs font-bold border transition ${
+                      s.defaultRestSeconds === sec
+                        ? 'bg-neon text-white border-neon neon-glow-sm'
+                        : 'bg-oled text-textMuted border-borderSubtle hover:text-textMain'
+                    }"
+                  >
+                    ${sec}s
+                  </button>
+                `
+                  )
+                  .join('')}
+              </div>
+            </div>
+          </section>
+
+          <!-- Copias de seguridad y exportación -->
+          <section class="bg-surface border border-borderSubtle rounded-2xl p-4 space-y-2.5">
+            <h3 class="text-xs font-extrabold uppercase tracking-wider text-neon mb-1">Backup y Exportación</h3>
+
+            <button
+              type="button"
+              onclick="exportBackupJSON()"
+              class="w-full h-12 px-4 rounded-xl bg-surfaceLight border border-borderSubtle hover:border-neon/50 text-textMain text-xs font-bold flex items-center justify-between active:scale-[0.98] transition"
+            >
+              <span>Exportar Backup Completo (.json)</span>
+              <span class="text-neon font-extrabold">↓ JSON</span>
+            </button>
+
+            <button
+              type="button"
+              onclick="triggerImportJSON()"
+              class="w-full h-12 px-4 rounded-xl bg-surfaceLight border border-borderSubtle hover:border-neon/50 text-textMain text-xs font-bold flex items-center justify-between active:scale-[0.98] transition"
+            >
+              <span>Importar Backup (.json)</span>
+              <span class="text-neon font-extrabold">↑ JSON</span>
+            </button>
+
+            <button
+              type="button"
+              onclick="exportHistoryCSV()"
+              class="w-full h-12 px-4 rounded-xl bg-surfaceLight border border-borderSubtle hover:border-neon/50 text-textMain text-xs font-bold flex items-center justify-between active:scale-[0.98] transition"
+            >
+              <span>Exportar Historial a Excel (.csv)</span>
+              <span class="text-neon font-extrabold">↓ CSV</span>
+            </button>
+          </section>
+
+          <!-- Zona de peligro -->
+          <section class="bg-surface border border-red-900/40 rounded-2xl p-4 space-y-2.5">
+            <h3 class="text-xs font-extrabold uppercase tracking-wider text-red-400">Zona de Peligro</h3>
+            <button
+              type="button"
+              onclick="confirmClearHistory()"
+              class="w-full h-12 px-4 rounded-xl bg-red-950/30 border border-red-900/50 text-red-300 text-xs font-bold active:scale-[0.98] transition"
+            >
+              Borrar solo el historial de entrenamientos
+            </button>
+            <button
+              type="button"
+              onclick="confirmFactoryResetStep1()"
+              class="w-full h-12 px-4 rounded-xl bg-red-950/50 border border-red-600/50 text-red-200 text-xs font-extrabold active:scale-[0.98] transition"
+            >
+              Restablecer datos de fábrica
+            </button>
+          </section>
+
+          <p class="text-[11px] text-textMuted text-center pt-1">
+            NeonLift · Todos tus datos se guardan localmente en este dispositivo.
+          </p>
+        </div>
+      `;
+    }
+
+    function toggleSetting(key) {
+      state.settings[key] = !state.settings[key];
+      saveSettings();
+      renderCurrentTab();
+    }
+
+    function setDefaultRest(sec) {
+      state.settings.defaultRestSeconds = sec;
+      saveSettings();
+      renderCurrentTab();
+      showToast(`Descanso predeterminado: ${sec}s`);
+    }
+
+    function downloadFile(content, filename, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function exportBackupJSON() {
+      const today = new Date().toISOString().slice(0, 10);
+      const payload = {
+        app: 'NeonLift',
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        routine: state.routine,
+        history: state.history,
+        settings: state.settings,
+      };
+      downloadFile(JSON.stringify(payload, null, 2), `gym_backup_${today}.json`, 'application/json');
+      showToast('Backup JSON descargado');
+    }
+
+    function triggerImportJSON() {
+      const input = document.getElementById('import-json-input');
+      input.value = '';
+      input.click();
+    }
+
+    function handleImportFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (!Array.isArray(parsed.routine) || !Array.isArray(parsed.history)) {
+            showToast('El archivo JSON no tiene un formato válido de NeonLift.', 'error');
+            return;
+          }
+          window.__pendingImport = parsed;
+          openModal(`
+            <div class="space-y-4">
+              <h3 class="text-base font-extrabold text-textMain">¿Restaurar Backup?</h3>
+              <p class="text-xs text-textMuted leading-relaxed">
+                Se reemplazarán tu rutina actual y tu historial por el archivo seleccionado (<span class="text-textMain font-bold">${parsed.history.length} entrenamientos</span>).
+              </p>
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" onclick="closeModal()" class="h-12 rounded-xl bg-surfaceLight border border-borderSubtle text-xs font-bold text-textMain">Cancelar</button>
+                <button type="button" onclick="applyPendingImport()" class="h-12 rounded-xl bg-neon text-white text-xs font-extrabold neon-glow-sm">Restaurar</button>
+              </div>
+            </div>
+          `);
+        } catch (err) {
+          showToast('Error al leer el archivo JSON.', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function applyPendingImport() {
+      const data = window.__pendingImport;
+      if (!data) return;
+      state.routine = data.routine;
+      state.history = data.history;
+      if (data.settings) state.settings = { ...getDefaultSettings(), ...data.settings };
+      state.draft.days = {};
+      saveRoutine();
+      saveHistory();
+      saveSettings();
+      saveDraft();
+      delete window.__pendingImport;
+      closeModal();
+      renderCurrentTab();
+      showToast('Backup restaurado correctamente');
+    }
+
+    // Exportación a Excel (.csv) con BOM UTF-8
+    function exportHistoryCSV() {
+      if (state.history.length === 0) {
+        showToast('No hay historial para exportar todavía.', 'error');
+        return;
+      }
+
+      const escCsv = (val) => {
+        const s = String(val ?? '').replace(/"/g, '""');
+        return `"${s}"`;
+      };
+
+      const rows = [['Fecha', 'Día', 'Ejercicio', 'Serie', 'Peso_kg', 'Reps', 'RIR', 'Nota']];
+
+      const sorted = [...state.history].sort((a, b) => new Date(b.date) - new Date(a.date));
+      sorted.forEach((sess) => {
+        const dateStr = new Date(sess.date).toLocaleDateString('es-AR');
+        (sess.exercises || []).forEach((ex) => {
+          (ex.sets || []).forEach((st, idx) => {
+            rows.push([
+              dateStr,
+              sess.dayName,
+              ex.name,
+              idx + 1,
+              st.weight ?? '',
+              st.reps ?? '',
+              st.rir ?? '',
+              idx === 0 ? ex.note || '' : '',
+            ]);
+          });
+        });
+      });
+
+      const csvContent = '\uFEFF' + rows.map((r) => r.map(escCsv).join(',')).join('\r\n');
+      const today = new Date().toISOString().slice(0, 10);
+      downloadFile(csvContent, `gym_historial_${today}.csv`, 'text/csv;charset=utf-8;');
+      showToast('Archivo Excel (.csv) descargado');
+    }
+
+    function confirmClearHistory() {
+      openModal(`
+        <div class="space-y-4">
+          <h3 class="text-base font-extrabold text-textMain">¿Borrar todo el historial?</h3>
+          <p class="text-xs text-textMuted">Tu rutina de 4 días se mantendrá intacta, pero se borrarán todos los entrenamientos y gráficos registrados.</p>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="closeModal()" class="h-12 rounded-xl bg-surfaceLight border border-borderSubtle text-xs font-bold text-textMain">Cancelar</button>
+            <button type="button" onclick="executeClearHistory()" class="h-12 rounded-xl bg-red-600 text-white text-xs font-extrabold">Borrar historial</button>
+          </div>
+        </div>
+      `);
+    }
+
+    function executeClearHistory() {
+      state.history = [];
+      state.progressSelectedPointIdx = null;
+      saveHistory();
+      closeModal();
+      renderCurrentTab();
+      showToast('Historial borrado');
+    }
+
+    // Confirmación doble para restablecer datos de fábrica
+    function confirmFactoryResetStep1() {
+      openModal(`
+        <div class="space-y-4">
+          <h3 class="text-base font-extrabold text-red-400">Paso 1 de 2 · Restablecer app</h3>
+          <p class="text-xs text-textMuted leading-relaxed">
+            Esto eliminará tu rutina personalizada, borradores activos, ajustes y todo tu historial de entrenamientos. Te recomendamos exportar un backup (.json) antes.
+          </p>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="closeModal()" class="h-12 rounded-xl bg-surfaceLight border border-borderSubtle text-xs font-bold text-textMain">Cancelar</button>
+            <button type="button" onclick="confirmFactoryResetStep2()" class="h-12 rounded-xl bg-red-600/80 text-white text-xs font-extrabold">Continuar →</button>
+          </div>
+        </div>
+      `);
+    }
+
+    function confirmFactoryResetStep2() {
+      openModal(`
+        <div class="space-y-4">
+          <h3 class="text-base font-extrabold text-red-400">Paso 2 de 2 · Confirmación final</h3>
+          <p class="text-xs text-textMain font-semibold leading-relaxed">
+            ¿Estás 100% seguro de borrar todos los datos y volver a la rutina Torso/Pierna original? Esta acción no se puede deshacer.
+          </p>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="closeModal()" class="h-12 rounded-xl bg-surfaceLight border border-borderSubtle text-xs font-bold text-textMain">Cancelar</button>
+            <button type="button" onclick="executeFactoryReset()" class="h-12 rounded-xl bg-red-600 text-white text-xs font-extrabold">Sí, borrar todo</button>
+          </div>
+        </div>
+      `);
+    }
+
+    function executeFactoryReset() {
+      Object.values(STORAGE_KEYS).forEach((k) => localStorage.removeItem(k));
+      state.routine = getDefaultRoutine();
+      state.history = [];
+      state.settings = getDefaultSettings();
+      state.draft = { selectedDayId: 1, days: {} };
+      state.progressSelectedExercise = '';
+      state.progressSelectedPointIdx = null;
+      stopTimer();
+      saveRoutine();
+      saveHistory();
+      saveSettings();
+      saveDraft();
+      closeModal();
+      renderCurrentTab();
+      showToast('Aplicación restablecida de fábrica');
+    }
+
+    /* -------------------------------------------------------------------------
+       INICIALIZACIÓN
+       ------------------------------------------------------------------------- */
+    document.addEventListener('DOMContentLoaded', () => {
+      loadFromStorage();
+
+      // Botón superior para abrir el cronómetro manualmente
+      document.getElementById('btn-open-timer').addEventListener('click', () => {
+        if (state.timer.active) {
+          stopTimer();
+        } else {
+          startRestTimer(state.settings.defaultRestSeconds || 90);
+        }
+      });
+
+      // Listener para importar archivo JSON
+      document.getElementById('import-json-input').addEventListener('change', handleImportFile);
+
+      updateNavHighlight();
+      renderCurrentTab();
+    });
+  </script>
+</body>
+</html>
